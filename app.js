@@ -47,6 +47,7 @@ io.on('connection', function (socket) {
   monsters[id] = monster;
   socket['monster_id'] = id;
   socket.emit('start', {monster: monster, info: {speed: monsterSpeed}});
+  socket.broadcast.emit('player-connect', monster);
 
   socket.on('move', function (data) {
     if(data.id == undefined || data.x == undefined || data.y == undefined) {
@@ -57,6 +58,7 @@ io.on('connection', function (socket) {
       if(monster.y + monsterSpeed == data.y || monster.y - monsterSpeed == data.y || monster.y == data.y) {
         monster.x = data.x;
         monster.y = data.y;
+        monster.direction = data.direction;
         socket.broadcast.emit('update-pos', monster);
       }
     }

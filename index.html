@@ -112,6 +112,7 @@
       var allMonsters = {};
 
       var socket;
+      var posUpdates = [];
 
       $(document).on('ready', function() {
         $('.full-height').height($(window).height());
@@ -132,13 +133,17 @@
         });
 
         socket.on('update-pos', function(data) {
-          allMonsters[data.id] = data;
-          //TODO update this to not replace entire thing
-          // make the animation type move
+          if(allMonsters[data.id] == undefined) {
+            allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
+          }
+          else {
+            posUpdates.push(data);
+          }
         });
 
         socket.on('player-connect', function(data) {
-          //TODO
+          allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
+          console.log(JSON.stringify(allMonsters));
         });
 
         socket.on('player-disconnect', function(data) {
@@ -162,7 +167,7 @@
       Game.draw = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         //TODO draw background
-        drawMonster(thisMonster);
+        drawMonster(thisMonster, thisMonster.animations);
         Object.keys(allMonsters).forEach(function(key) {
           //TODO check if they;re even near us
           drawMonster(allMonsters[key]);
@@ -170,7 +175,7 @@
       };
 
       function drawMonster(monster) {
-        var animation = monster.animations[monster.animations.currentAnimation];
+        var animation = monster.animations.move;
 
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -204,8 +209,6 @@
         if (animation.frameIndex >= animation.totalFrames - 1) {
           animation.frameIndex = 0;
         }
-
-        //ctx.fillRect(monster.x, monster.y, 10, 10);
       }
 
       Game.update = function() {
@@ -229,10 +232,21 @@
             thisMonster.x += monsterSpeed;
             thisMonster.direction = "right";
           }
-          socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y});
+
+          socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
         });
 
         keyPresses = [];
+
+        posUpdates.forEach(function(element, index, array) {
+          var theMonster = allMonsters[element.id];
+          theMonster.x = element.x;
+          theMonster.y = element.y;
+          theMonster.animations.currentAnimation = 'move';
+          theMonster.direction = element.direction;
+        });
+
+        posUpdates = [];
       };
 
       Game.run = (function() {
