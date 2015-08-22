@@ -1,0 +1,47 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.container-header {
+
+  .container {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+
+    h1, h3 {
+      text-align: center;
+    }
+
+    h3 {
+      margin-top: 0;
+    }
+
+    .col-md-6 {
+      padding: 0;
+    }
+
+    .btn {
+      margin-top: 36px;
+      margin-left: 4px;
+      margin-right: 4px;
+      font-size: 18px;
+      padding: 12px;
+      width: 150px;
+    }
+
+    .btn-primary {
+      float: right;
+    }
+
+    .btn-success {
+      float: left;
+    }
+
+  }
+
+}

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Bootstrap 101 Template</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/style.css">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="container-fluid container-header full-height">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-12">
+            <h1>KILL THE HUMAN</h1>
+          </div>
+          <div class="col-md-12">
+            <h3>Hunt them down before everyone else</h3>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">
+            <a href="#container-help" class="btn btn-primary" type="submit">How to play</a>
+          </div>
+          <div class="col-md-6">
+            <a href="#container-game" class="btn btn-success" type="submit">Play</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="container-game" class="fluid-container container-game full-height">
+      <div class="row">
+        <canvas id="canvas" class="full-height full-width"></canvas>
+      </div>
+    </div>
+    <div id="container-help" class="fluid-container container-help">
+      <div class="container">
+        <div class="row">
+          <p>It uses WASD. Actual help section coming soon!</p>
+        </div>
+      </div>
+    </div>
+    <div class="fluid-container container-footer">
+      <div class="row">
+        <p>Footer stuff TODO</p>
+      </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <script>
+
+      var fps = 30;
+      var canvas;
+      var ctx;
+
+      var keyW = 87;
+      var keyS = 83;
+      var keyA = 65;
+      var keyD = 68;
+      var keyPresses = [];
+
+      var monsterSpeed = 2;
+      var Monster = function(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+      };
+
+      var thisMonster = new Monster(0, 0, 'gargant');
+
+      $(document).on('ready', function() {
+        $('.full-height').height($(window).height());
+        $('.full-width').width($(window).width());
+
+        canvas = document.getElementById("canvas");
+        ctx = canvas.getContext('2d');
+
+        startGame();
+        window.onEachFrame(Game.run);
+
+        $(document).keydown(function(event) {
+          var key = event.which;
+          if([keyW, keyS, keyA, keyD].indexOf(key) == -1) {
+            return;
+          }
+          event.preventDefault();
+          keyPresses.push(key);
+        });
+      });
+
+      var Game = {};
+
+      Game.fps = 50;
+
+      Game.draw = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(thisMonster.x, thisMonster.y, 10, 10);
+      };
+      Game.update = function() {
+        keyPresses.forEach(function(element, index, array) {
+          var key = element;
+
+          // Rotate image on each key press to make sure its correct
+          if (key == keyW) {
+            thisMonster.y -= monsterSpeed;
+          }
+          else if(key == keyS) {
+            thisMonster.y += monsterSpeed;
+          }
+          else if(key == keyA) {
+            thisMonster.x -= monsterSpeed;
+          }
+          else if(key == keyD) {
+            thisMonster.x += monsterSpeed;
+          }
+        });
+
+        keyPresses = [];
+      };
+
+      Game.run = (function() {
+        var loops = 0, skipTicks = 1000 / Game.fps,
+            maxFrameSkip = 10,
+            nextGameTick = (new Date).getTime();
+
+        return function() {
+          loops = 0;
+
+          while ((new Date).getTime() > nextGameTick && loops < maxFrameSkip) {
+            Game.update();
+            nextGameTick += skipTicks;
+            loops++;
+          }
+
+          Game.draw();
+        };
+      })();
+
+      function startGame() {
+        (function() {
+          var onEachFrame;
+          if (window.webkitRequestAnimationFrame) {
+            onEachFrame = function(cb) {
+              var _cb = function() { cb(); webkitRequestAnimationFrame(_cb); }
+              _cb();
+            };
+          } else if (window.mozRequestAnimationFrame) {
+            onEachFrame = function(cb) {
+              var _cb = function() { cb(); mozRequestAnimationFrame(_cb); }
+              _cb();
+            };
+          } else {
+            onEachFrame = function(cb) {
+              setInterval(cb, 1000 / 60);
+            }
+          }
+
+          window.onEachFrame = onEachFrame;
+        })();
+      }
+
+    </script>
+
+  </body>
+</html>
