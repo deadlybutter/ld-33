@@ -66,6 +66,8 @@
       var fps = 30;
       var canvas;
       var ctx;
+      var xScale;
+      var yScale;
 
       var keyW = 87;
       var keyS = 83;
@@ -136,9 +138,9 @@
           }
         }
 
-        this.updatePercent = function(canvas) {
-          this.percentX = (this.x / canvas.width) * 100;
-          this.percentY = (this.y / canvas.height) * 100;
+        this.updatePercent = function(map) {
+          this.percentX = (this.x / map.width) * 100;
+          this.percentY = (this.y / map.height) * 100;
         }
       };
       var thisMonster = new Monster(0, 0, 'gargant', 1);
@@ -157,11 +159,12 @@
 
         canvas = document.getElementById("canvas");
         ctx = canvas.getContext('2d');
-        ctx.canvas.width = window.innerWidth;
-        ctx.canvas.height = window.innerHeight;
+        ctx.canvas.width = 1024;
+        ctx.canvas.height = 576;
 
         map = new Image();
         map.src = "/img/ld33-map.png";
+
         tile = new Image();
         tile.src = "/img/tile.png";
         tile.onload = function() {
@@ -188,7 +191,7 @@
         socket.on('start', function (data) {
           var dataMonster = data.monster;
           thisMonster = new Monster(dataMonster.x, dataMonster.y, dataMonster.type, dataMonster.id, dataMonster.direction);
-          thisMonster.updatePercent(canvas);
+          thisMonster.updatePercent(map);
           var info = data.info;
           monsterSpeed = info.speed;
           startGame();
@@ -198,7 +201,7 @@
         socket.on('update-pos', function(data) {
           if(allMonsters[data.id] == undefined) {
             allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
-            allMonsters[data.id].updatePercent(canvas);
+            allMonsters[data.id].updatePercent(map);
           }
           else {
             posUpdates.push(data);
@@ -208,7 +211,7 @@
         socket.on('attacking', function(data) {
           if(allMonsters[data.id] == undefined) {
             allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
-            allMonsters[data.id].updatePercent(canvas);
+            allMonsters[data.id].updatePercent(map);
           }
           else {
             allMonsters[data.id].animations.currentAnimation = "attack";
@@ -217,7 +220,7 @@
 
         socket.on('player-connect', function(data) {
           allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
-          allMonsters[data.id].updatePercent(canvas);
+          allMonsters[data.id].updatePercent(map);
         });
 
         socket.on('player-disconnect', function(data) {
@@ -253,12 +256,8 @@
         var animation = monster.animations[monster.animations.currentAnimation];
         var centerX = (canvas.width / 2) - (animation.frameWidth / 2);
         var centerY = (canvas.height / 2) - (animation.frameWidth / 2);
-        var drawX = monster.id == thisMonster.id ? centerX : (monster.percentX * canvas.width) / 100;
-        var drawY = monster.id == thisMonster.id ? centerY : (monster.percentY * canvas.height) / 100;
-
-        if(thisMonster.id != monster.id) {
-          console.log(drawX, drawY, monster);
-        }
+        var drawX = monster.id == thisMonster.id ? centerX : monster.x - (thisMonster.x - (canvas.width / 2));
+        var drawY = monster.id == thisMonster.id ? centerY : monster.y - (thisMonster.y - (canvas.height / 2));
 
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -334,14 +333,14 @@
           theMonster.y = element.y;
           theMonster.animations.currentAnimation = 'move';
           theMonster.direction = element.direction;
-          theMonster.updatePercent(canvas);
+          theMonster.updatePercent(map);
         });
 
         posUpdates = [];
       };
 
       function doMoveUpdate() {
-        thisMonster.updatePercent(canvas);
+        thisMonster.updatePercent(map);
         thisMonster.animations.currentAnimation = "move";
         socket.emit('move', {id: thisMonster.id, x: thisMonster.x,
           y: thisMonster.y, direction: thisMonster.direction,
