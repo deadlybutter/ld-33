@@ -73,13 +73,39 @@
       var keyD = 68;
       var keyPresses = [];
 
+      var animationsGlobal = {
+        gargant: {
+          frameWidth: 64,
+          frameHeight: 64,
+          totalFrames: 8,
+          ticksPerFrame: 10,
+        }
+      }
       var monsterSpeed = 2;
+      var monsterLength = 80;
       var Monster = function(x, y, type, id, direction) {
         this.x = x;
         this.y = y;
         this.type = type;
         this.id = id;
         this.direction = direction;
+
+        var moveImage = new Image();
+        moveImage.src = "/img/monsters/" + this.type + "/" + this.type + "-move.png";
+        var attackImage = new Image();
+        moveImage.src = "/img/monsters/" + this.type + "/" + this.type + "-attack.png";
+        this.animations = {
+          currentAnimation: 'move',
+          move: {
+            image: moveImage,
+            frameWidth: animationsGlobal[this.type].frameWidth,
+            frameHeight: animationsGlobal[this.type].frameHeight,
+            frameIndex: 0,
+            totalFrames: animationsGlobal[this.type].totalFrames,
+            ticksPerFrame: animationsGlobal[this.type].ticksPerFrame,
+            ticks: 0
+          }
+        }
       };
       var thisMonster = new Monster(0, 0, 'gargant', 1);
       var allMonsters = {};
@@ -128,6 +154,7 @@
 
       Game.draw = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        //TODO draw background
         drawMonster(thisMonster);
         Object.keys(allMonsters).forEach(function(key) {
           drawMonster(allMonsters[key]);
@@ -135,7 +162,22 @@
       };
 
       function drawMonster(monster) {
-        ctx.fillRect(monster.x, monster.y, 10, 10);
+        var animation = monster.animations[monster.animations.currentAnimation];
+        ctx.drawImage(animation.image, animation.frameIndex * animation.frameWidth,
+          0, animation.frameWidth, animation.frameHeight, monster.x, monster.y,
+          monsterLength, monsterLength);
+
+        animation.ticks++;
+        if (animation.ticks >= animation.ticksPerFrame) {
+          animation.frameIndex++;
+          animation.ticks = 0;
+        }
+
+        if (animation.frameIndex > animation.totalFrames) {
+          animation.frameIndex = 0;
+        }
+
+        //ctx.fillRect(monster.x, monster.y, 10, 10);
       }
 
       Game.update = function() {

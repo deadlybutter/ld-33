@@ -27,7 +27,7 @@ var io = require('socket.io')(server);
 // GAME VARS
 
 var monsters = {};
-var monsterSpeed = 2;
+var monsterSpeed = 4;
 
 // END GAME VARS
 
