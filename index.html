@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Bootstrap 101 Template</title>
+    <title>KILL THE HUMAN</title>
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -58,6 +58,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
     <script>
@@ -73,13 +74,17 @@
       var keyPresses = [];
 
       var monsterSpeed = 2;
-      var Monster = function(x, y, type) {
+      var Monster = function(x, y, type, id, direction) {
         this.x = x;
         this.y = y;
         this.type = type;
+        this.id = id;
+        this.direction = direction;
       };
+      var thisMonster = new Monster(0, 0, 'gargant', 1);
+      var allMonsters = {};
 
-      var thisMonster = new Monster(0, 0, 'gargant');
+      var socket;
 
       $(document).on('ready', function() {
         $('.full-height').height($(window).height());
@@ -88,8 +93,24 @@
         canvas = document.getElementById("canvas");
         ctx = canvas.getContext('2d');
 
-        startGame();
-        window.onEachFrame(Game.run);
+        socket = io.connect(location.host);
+
+        socket.on('start', function (data) {
+          var dataMonster = data.monster;
+          thisMonster = new Monster(dataMonster.x, dataMonster.y, dataMonster.type, dataMonster.id, dataMonster.direction);
+          var info = data.info;
+          monsterSpeed = info.speed;
+          startGame();
+          window.onEachFrame(Game.run);
+        });
+
+        socket.on('update-pos', function(data) {
+          allMonsters[data.id] = data;
+        });
+
+        socket.on('player-disconnect', function(data) {
+          delete allMonsters[data];
+        });
 
         $(document).keydown(function(event) {
           var key = event.which;
@@ -107,13 +128,21 @@
 
       Game.draw = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillRect(thisMonster.x, thisMonster.y, 10, 10);
+        drawMonster(thisMonster);
+        Object.keys(allMonsters).forEach(function(key) {
+          drawMonster(allMonsters[key]);
+        });
       };
+
+      function drawMonster(monster) {
+        ctx.fillRect(monster.x, monster.y, 10, 10);
+      }
+
       Game.update = function() {
         keyPresses.forEach(function(element, index, array) {
           var key = element;
-
-          // Rotate image on each key press to make sure its correct
+          // TODO Rotate image on each key press to make sure its correct
+          // and the animation system
           if (key == keyW) {
             thisMonster.y -= monsterSpeed;
           }
@@ -126,6 +155,7 @@
           else if(key == keyD) {
             thisMonster.x += monsterSpeed;
           }
+          socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y});
         });
 
         keyPresses = [];
