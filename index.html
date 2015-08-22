@@ -41,7 +41,7 @@
     </div>
     <div id="container-game" class="fluid-container container-game full-height">
       <div class="row">
-        <canvas id="canvas" class="full-height full-width"></canvas>
+        <canvas id="canvas"></canvas>
       </div>
     </div>
     <div id="container-help" class="fluid-container container-help">
@@ -97,7 +97,7 @@
           totalMoveFrames: 8,
           totalAttackFrames: 8,
           ticksPerFrameMove: 10,
-          ticksPerFrameAttack: 4          
+          ticksPerFrameAttack: 4
         }
       }
       var monsterSpeed = 2;
@@ -137,6 +137,8 @@
       var thisMonster = new Monster(0, 0, 'gargant', 1);
       var allMonsters = {};
 
+      var map;
+
       var socket;
       var posUpdates = [];
 
@@ -146,7 +148,29 @@
 
         canvas = document.getElementById("canvas");
         ctx = canvas.getContext('2d');
+        ctx.canvas.width = window.innerWidth;
+        ctx.canvas.height = window.innerHeight;
 
+        map = new Image();
+        map.src = "/img/ld33-map.png";
+
+        map.onload = function() {
+          console.log("loaded");
+          ctx.drawImage(map, 0, 0, canvas.width, canvas.height);
+          configureSockets();
+        }
+
+        $(document).keydown(function(event) { //TODO fix this to allow multiple key presses
+          var key = event.which;
+          if([keyW, keyS, keyA, keyD, keySpace].indexOf(key) == -1) {
+            return;
+          }
+          event.preventDefault();
+          keyPresses.push(key);
+        });
+      });
+
+      function configureSockets() {
         socket = io.connect(location.host);
 
         socket.on('start', function (data) {
@@ -184,16 +208,7 @@
         socket.on('player-disconnect', function(data) {
           delete allMonsters[data];
         });
-
-        $(document).keydown(function(event) { //TODO fix this to allow multiple key presses
-          var key = event.which;
-          if([keyW, keyS, keyA, keyD, keySpace].indexOf(key) == -1) {
-            return;
-          }
-          event.preventDefault();
-          keyPresses.push(key);
-        });
-      });
+      }
 
       var Game = {};
 
@@ -201,6 +216,21 @@
 
       Game.draw = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var sourceX = thisMonster.x - (canvas.width / 2);
+        if(sourceX < 0) {
+          sourceX = 0;
+        }
+        if (sourceX > map.width - canvas.width) {
+          sourceX = map.width - canvas.width;
+        }
+        var sourceY = thisMonster.y - (canvas.height / 2);
+        if(sourceY < 0) {
+          sourceY = 0;
+        }
+        if (sourceY > map.height - canvas.height) {
+          sourceY = map.height - canvas.height;
+        }
+        ctx.drawImage(map, sourceX, sourceY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
         //TODO draw background
         drawMonster(thisMonster, thisMonster.animations);
         Object.keys(allMonsters).forEach(function(key) {
