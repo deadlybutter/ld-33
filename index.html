@@ -80,7 +80,24 @@
           frameHeight: 64,
           totalMoveFrames: 8,
           totalAttackFrames: 5,
-          ticksPerFrame: 10,
+          ticksPerFrameMove: 10,
+          ticksPerFrameAttack: 10,
+        },
+        ogre: {
+          frameWidth: 64,
+          frameHeight: 64,
+          totalMoveFrames: 8,
+          totalAttackFrames: 8,
+          ticksPerFrameMove: 10,
+          ticksPerFrameAttack: 4
+        },
+        ogrillion: {
+          frameWidth: 64,
+          frameHeight: 64,
+          totalMoveFrames: 8,
+          totalAttackFrames: 8,
+          ticksPerFrameMove: 10,
+          ticksPerFrameAttack: 4          
         }
       }
       var monsterSpeed = 2;
@@ -103,7 +120,7 @@
             frameHeight: animationsGlobal[this.type].frameHeight,
             frameIndex: 0,
             totalFrames: animationsGlobal[this.type].totalMoveFrames,
-            ticksPerFrame: animationsGlobal[this.type].ticksPerFrame,
+            ticksPerFrame: animationsGlobal[this.type].ticksPerFrameMove,
             ticks: 0
           },
           attack: {
@@ -112,7 +129,7 @@
             frameHeight: animationsGlobal[this.type].frameHeight,
             frameIndex: 0,
             totalFrames: animationsGlobal[this.type].totalAttackFrames,
-            ticksPerFrame: animationsGlobal[this.type].ticksPerFrame,
+            ticksPerFrame: animationsGlobal[this.type].ticksPerFrameAttack,
             ticks: 0
           }
         }

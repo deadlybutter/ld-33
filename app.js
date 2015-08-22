@@ -28,6 +28,7 @@ var io = require('socket.io')(server);
 
 var monsters = {};
 var monsterSpeed = 4;
+var monsterTypes = ['gargant', 'ogre', 'ogrillion'];
 
 // END GAME VARS
 
@@ -41,7 +42,7 @@ io.on('connection', function (socket) {
     id: id,
     x: 10,
     y: 20,
-    type: 'gargant',
+    type: monsterTypes[Math.floor(Math.random() * monsterTypes.length)],
     direction: 'up'
   }
   monsters[id] = monster;
