@@ -83,7 +83,6 @@
         }
       }
       var monsterSpeed = 2;
-      var monsterLength = 64;
       var Monster = function(x, y, type, id, direction) {
         this.x = x;
         this.y = y;
@@ -172,9 +171,29 @@
 
       function drawMonster(monster) {
         var animation = monster.animations[monster.animations.currentAnimation];
+
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        monsterHalf = animation.frameWidth / 2;
+        ctx.translate(monster.x + monsterHalf, monster.y + monsterHalf);
+        var rotation = 0;
+        if(monster.direction == "down") {
+          rotation = 180;
+        }
+        else if(monster.direction == "left") {
+          rotation = 270;
+        }
+        else if(monster.direction == "right") {
+          rotation = 90;
+        }
+        var angleInRadians = rotation * Math.PI / 180;
+        ctx.rotate(angleInRadians);
+
         ctx.drawImage(animation.image, animation.frameIndex * animation.frameWidth,
-          0, animation.frameWidth, animation.frameHeight, monster.x, monster.y,
-          monsterLength, monsterLength);
+          0, animation.frameWidth, animation.frameHeight, -monsterHalf, -monsterHalf,
+          animation.frameWidth, animation.frameHeight);
+
+        ctx.restore();
 
         animation.ticks++;
         if (animation.ticks >= animation.ticksPerFrame) {
@@ -196,15 +215,19 @@
           // and the animation system
           if (key == keyW) {
             thisMonster.y -= monsterSpeed;
+            thisMonster.direction = "up";
           }
           else if(key == keyS) {
             thisMonster.y += monsterSpeed;
+            thisMonster.direction = "down";
           }
           else if(key == keyA) {
             thisMonster.x -= monsterSpeed;
+            thisMonster.direction = "left";
           }
           else if(key == keyD) {
             thisMonster.x += monsterSpeed;
+            thisMonster.direction = "right";
           }
           socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y});
         });
