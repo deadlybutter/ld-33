@@ -79,10 +79,11 @@
           frameHeight: 64,
           totalFrames: 8,
           ticksPerFrame: 10,
+          framePadding: 4,
         }
       }
       var monsterSpeed = 2;
-      var monsterLength = 80;
+      var monsterLength = 64;
       var Monster = function(x, y, type, id, direction) {
         this.x = x;
         this.y = y;
@@ -93,7 +94,7 @@
         var moveImage = new Image();
         moveImage.src = "/img/monsters/" + this.type + "/" + this.type + "-move.png";
         var attackImage = new Image();
-        moveImage.src = "/img/monsters/" + this.type + "/" + this.type + "-attack.png";
+        attackImage.src = "/img/monsters/" + this.type + "/" + this.type + "-attack.png";
         this.animations = {
           currentAnimation: 'move',
           move: {
@@ -101,6 +102,7 @@
             frameWidth: animationsGlobal[this.type].frameWidth,
             frameHeight: animationsGlobal[this.type].frameHeight,
             frameIndex: 0,
+            framePadding: animationsGlobal[this.type].framePadding,
             totalFrames: animationsGlobal[this.type].totalFrames,
             ticksPerFrame: animationsGlobal[this.type].ticksPerFrame,
             ticks: 0
@@ -132,13 +134,19 @@
 
         socket.on('update-pos', function(data) {
           allMonsters[data.id] = data;
+          //TODO update this to not replace entire thing
+          // make the animation type move
+        });
+
+        socket.on('player-connect', function(data) {
+          //TODO
         });
 
         socket.on('player-disconnect', function(data) {
           delete allMonsters[data];
         });
 
-        $(document).keydown(function(event) {
+        $(document).keydown(function(event) { //TODO fix this to allow multiple key presses
           var key = event.which;
           if([keyW, keyS, keyA, keyD].indexOf(key) == -1) {
             return;
@@ -157,6 +165,7 @@
         //TODO draw background
         drawMonster(thisMonster);
         Object.keys(allMonsters).forEach(function(key) {
+          //TODO check if they;re even near us
           drawMonster(allMonsters[key]);
         });
       };
@@ -173,7 +182,7 @@
           animation.ticks = 0;
         }
 
-        if (animation.frameIndex > animation.totalFrames) {
+        if (animation.frameIndex >= animation.totalFrames - 1) {
           animation.frameIndex = 0;
         }
 
