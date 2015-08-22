@@ -107,6 +107,8 @@
         this.type = type;
         this.id = id;
         this.direction = direction;
+        this.percentX = 0;
+        this.percentY = 0;
 
         var moveImage = new Image();
         moveImage.src = "/img/monsters/" + this.type + "/" + this.type + "-move.png";
@@ -133,11 +135,18 @@
             ticks: 0
           }
         }
+
+        this.updatePercent = function(canvas) {
+          this.percentX = (this.x / canvas.width) * 100;
+          this.percentY = (this.y / canvas.height) * 100;
+        }
       };
       var thisMonster = new Monster(0, 0, 'gargant', 1);
       var allMonsters = {};
 
       var map;
+      var tile;
+      var tilePattern;
 
       var socket;
       var posUpdates = [];
@@ -153,9 +162,12 @@
 
         map = new Image();
         map.src = "/img/ld33-map.png";
-
+        tile = new Image();
+        tile.src = "/img/tile.png";
+        tile.onload = function() {
+          tilePattern = ctx.createPattern(tile, 'repeat');
+        }
         map.onload = function() {
-          console.log("loaded");
           ctx.drawImage(map, 0, 0, canvas.width, canvas.height);
           configureSockets();
         }
@@ -176,6 +188,7 @@
         socket.on('start', function (data) {
           var dataMonster = data.monster;
           thisMonster = new Monster(dataMonster.x, dataMonster.y, dataMonster.type, dataMonster.id, dataMonster.direction);
+          thisMonster.updatePercent(canvas);
           var info = data.info;
           monsterSpeed = info.speed;
           startGame();
@@ -185,6 +198,7 @@
         socket.on('update-pos', function(data) {
           if(allMonsters[data.id] == undefined) {
             allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
+            allMonsters[data.id].updatePercent(canvas);
           }
           else {
             posUpdates.push(data);
@@ -194,6 +208,7 @@
         socket.on('attacking', function(data) {
           if(allMonsters[data.id] == undefined) {
             allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
+            allMonsters[data.id].updatePercent(canvas);
           }
           else {
             allMonsters[data.id].animations.currentAnimation = "attack";
@@ -202,7 +217,7 @@
 
         socket.on('player-connect', function(data) {
           allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
-          console.log(JSON.stringify(allMonsters));
+          allMonsters[data.id].updatePercent(canvas);
         });
 
         socket.on('player-disconnect', function(data) {
@@ -216,23 +231,18 @@
 
       Game.draw = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#4D6B4E";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = tilePattern;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Background
         var sourceX = thisMonster.x - (canvas.width / 2);
-        if(sourceX < 0) {
-          sourceX = 0;
-        }
-        if (sourceX > map.width - canvas.width) {
-          sourceX = map.width - canvas.width;
-        }
         var sourceY = thisMonster.y - (canvas.height / 2);
-        if(sourceY < 0) {
-          sourceY = 0;
-        }
-        if (sourceY > map.height - canvas.height) {
-          sourceY = map.height - canvas.height;
-        }
         ctx.drawImage(map, sourceX, sourceY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
-        //TODO draw background
-        drawMonster(thisMonster, thisMonster.animations);
+
+        // Monsters
+        drawMonster(thisMonster);
         Object.keys(allMonsters).forEach(function(key) {
           //TODO check if they;re even near us
           drawMonster(allMonsters[key]);
@@ -241,11 +251,19 @@
 
       function drawMonster(monster) {
         var animation = monster.animations[monster.animations.currentAnimation];
+        var centerX = (canvas.width / 2) - (animation.frameWidth / 2);
+        var centerY = (canvas.height / 2) - (animation.frameWidth / 2);
+        var drawX = monster.id == thisMonster.id ? centerX : (monster.percentX * canvas.width) / 100;
+        var drawY = monster.id == thisMonster.id ? centerY : (monster.percentY * canvas.height) / 100;
+
+        if(thisMonster.id != monster.id) {
+          console.log(drawX, drawY, monster);
+        }
 
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         monsterHalf = animation.frameWidth / 2;
-        ctx.translate(monster.x + monsterHalf, monster.y + monsterHalf);
+        ctx.translate(drawX + monsterHalf, drawY + monsterHalf);
         var rotation = 0;
         if(monster.direction == "down") {
           rotation = 180;
@@ -284,26 +302,22 @@
           if (key == keyW) {
             thisMonster.y -= monsterSpeed;
             thisMonster.direction = "up";
-            thisMonster.animations.currentAnimation = "move";
-            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
+            doMoveUpdate();
           }
           else if(key == keyS) {
             thisMonster.y += monsterSpeed;
             thisMonster.direction = "down";
-            thisMonster.animations.currentAnimation = "move";
-            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
+            doMoveUpdate();
           }
           else if(key == keyA) {
             thisMonster.x -= monsterSpeed;
             thisMonster.direction = "left";
-            thisMonster.animations.currentAnimation = "move";
-            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
+            doMoveUpdate();
           }
           else if(key == keyD) {
             thisMonster.x += monsterSpeed;
             thisMonster.direction = "right";
-            thisMonster.animations.currentAnimation = "move";
-            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
+            doMoveUpdate();
           }
           else if(key == keySpace) {
             thisMonster.animations.currentAnimation = "attack";
@@ -320,10 +334,19 @@
           theMonster.y = element.y;
           theMonster.animations.currentAnimation = 'move';
           theMonster.direction = element.direction;
+          theMonster.updatePercent(canvas);
         });
 
         posUpdates = [];
       };
+
+      function doMoveUpdate() {
+        thisMonster.updatePercent(canvas);
+        thisMonster.animations.currentAnimation = "move";
+        socket.emit('move', {id: thisMonster.id, x: thisMonster.x,
+          y: thisMonster.y, direction: thisMonster.direction,
+          xPercent: thisMonster.percentX, yPercent: thisMonster.percentY});
+      }
 
       Game.run = (function() {
         var loops = 0, skipTicks = 1000 / Game.fps,

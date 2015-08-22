@@ -40,8 +40,8 @@ io.on('connection', function (socket) {
   var id = uuid.v4();
   var monster = {
     id: id,
-    x: 10,
-    y: 20,
+    x: 200,
+    y: 800,
     type: monsterTypes[Math.floor(Math.random() * monsterTypes.length)],
     direction: 'up'
   }
