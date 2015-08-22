@@ -163,10 +163,10 @@
         ctx.canvas.height = 576;
 
         map = new Image();
-        map.src = "/img/ld33-map.png";
+        map.src = "/img/map/ld33-map.png";
 
         tile = new Image();
-        tile.src = "/img/tile.png";
+        tile.src = "/img/map/tile.png";
         tile.onload = function() {
           tilePattern = ctx.createPattern(tile, 'repeat');
         }
@@ -175,7 +175,7 @@
           configureSockets();
         }
 
-        $(document).keydown(function(event) { //TODO fix this to allow multiple key presses
+        $(document).keydown(function(event) {
           var key = event.which;
           if([keyW, keyS, keyA, keyD, keySpace].indexOf(key) == -1) {
             return;
@@ -247,7 +247,6 @@
         // Monsters
         drawMonster(thisMonster);
         Object.keys(allMonsters).forEach(function(key) {
-          //TODO check if they;re even near us
           drawMonster(allMonsters[key]);
         });
       };
@@ -296,8 +295,6 @@
       Game.update = function() {
         keyPresses.forEach(function(element, index, array) {
           var key = element;
-          // TODO Rotate image on each key press to make sure its correct
-          // and the animation system
           if (key == keyW) {
             thisMonster.y -= monsterSpeed;
             thisMonster.direction = "up";
