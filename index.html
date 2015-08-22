@@ -47,7 +47,7 @@
     <div id="container-help" class="fluid-container container-help">
       <div class="container">
         <div class="row">
-          <p>It uses WASD. Actual help section coming soon!</p>
+          <p>It uses WASD and spacebar. Actual help section coming soon!</p>
         </div>
       </div>
     </div>
@@ -71,15 +71,16 @@
       var keyS = 83;
       var keyA = 65;
       var keyD = 68;
+      var keySpace = 32;
       var keyPresses = [];
 
       var animationsGlobal = {
         gargant: {
           frameWidth: 64,
           frameHeight: 64,
-          totalFrames: 8,
+          totalMoveFrames: 8,
+          totalAttackFrames: 5,
           ticksPerFrame: 10,
-          framePadding: 4,
         }
       }
       var monsterSpeed = 2;
@@ -101,8 +102,16 @@
             frameWidth: animationsGlobal[this.type].frameWidth,
             frameHeight: animationsGlobal[this.type].frameHeight,
             frameIndex: 0,
-            framePadding: animationsGlobal[this.type].framePadding,
-            totalFrames: animationsGlobal[this.type].totalFrames,
+            totalFrames: animationsGlobal[this.type].totalMoveFrames,
+            ticksPerFrame: animationsGlobal[this.type].ticksPerFrame,
+            ticks: 0
+          },
+          attack: {
+            image: attackImage,
+            frameWidth: animationsGlobal[this.type].frameWidth,
+            frameHeight: animationsGlobal[this.type].frameHeight,
+            frameIndex: 0,
+            totalFrames: animationsGlobal[this.type].totalAttackFrames,
             ticksPerFrame: animationsGlobal[this.type].ticksPerFrame,
             ticks: 0
           }
@@ -141,6 +150,15 @@
           }
         });
 
+        socket.on('attacking', function(data) {
+          if(allMonsters[data.id] == undefined) {
+            allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
+          }
+          else {
+            allMonsters[data.id].animations.currentAnimation = "attack";
+          }
+        });
+
         socket.on('player-connect', function(data) {
           allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
           console.log(JSON.stringify(allMonsters));
@@ -152,7 +170,7 @@
 
         $(document).keydown(function(event) { //TODO fix this to allow multiple key presses
           var key = event.which;
-          if([keyW, keyS, keyA, keyD].indexOf(key) == -1) {
+          if([keyW, keyS, keyA, keyD, keySpace].indexOf(key) == -1) {
             return;
           }
           event.preventDefault();
@@ -175,7 +193,7 @@
       };
 
       function drawMonster(monster) {
-        var animation = monster.animations.move;
+        var animation = monster.animations[monster.animations.currentAnimation];
 
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -219,21 +237,32 @@
           if (key == keyW) {
             thisMonster.y -= monsterSpeed;
             thisMonster.direction = "up";
+            thisMonster.animations.currentAnimation = "move";
+            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
           }
           else if(key == keyS) {
             thisMonster.y += monsterSpeed;
             thisMonster.direction = "down";
+            thisMonster.animations.currentAnimation = "move";
+            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
           }
           else if(key == keyA) {
             thisMonster.x -= monsterSpeed;
             thisMonster.direction = "left";
+            thisMonster.animations.currentAnimation = "move";
+            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
           }
           else if(key == keyD) {
             thisMonster.x += monsterSpeed;
             thisMonster.direction = "right";
+            thisMonster.animations.currentAnimation = "move";
+            socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
+          }
+          else if(key == keySpace) {
+            thisMonster.animations.currentAnimation = "attack";
+            socket.emit('attack', thisMonster);
           }
 
-          socket.emit('move', {id: thisMonster.id, x: thisMonster.x, y: thisMonster.y, direction: thisMonster.direction});
         });
 
         keyPresses = [];

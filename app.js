@@ -64,6 +64,11 @@ io.on('connection', function (socket) {
     }
   });
 
+  socket.on('attack', function(data) {
+    //TODO check if we are hitting player
+    socket.broadcast.emit('attacking', monsters[data.id]);
+  })
+
   socket.on('disconnect', function() {
     socket.broadcast.emit('player-disconnect', socket.monster_id);
     delete monsters[socket.monster_id];
