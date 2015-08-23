@@ -27,8 +27,14 @@ var io = require('socket.io')(server);
 // GAME VARS
 
 var monsters = {};
-var monsterSpeed = 8;
+// var monsterSpeed = 8;
+var monsterSsssspeed = 15;
 var monsterTypes = ['gargant', 'ogre', 'ogrillion'];
+
+var mapWidth = 3072;
+var mapHeight = 2048;
+var wallWidth = 96;
+var wallHeight = 60;
 
 // END GAME VARS
 
@@ -57,10 +63,14 @@ io.on('connection', function (socket) {
     var monster = monsters[data.id];
     if(monster.x + monsterSpeed == data.x || monster.x - monsterSpeed == data.x || monster.x == data.x) {
       if(monster.y + monsterSpeed == data.y || monster.y - monsterSpeed == data.y || monster.y == data.y) {
-        monster.x = data.x;
-        monster.y = data.y;
-        monster.direction = data.direction;
-        socket.broadcast.emit('update-pos', monster);
+        if(data.x > wallWidth && data.x < mapWidth - wallWidth) {
+          if(data.y > wallHeight && data.y < mapHeight - wallHeight) {
+            monster.x = data.x;
+            monster.y = data.y;
+            monster.direction = data.direction;
+            socket.broadcast.emit('update-pos', monster);
+          }
+        }
       }
     }
   });
