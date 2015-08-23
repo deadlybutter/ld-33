@@ -176,6 +176,8 @@
       var map;
       var tile;
       var tilePattern;
+      var wallWidth = 96;
+      var wallHeight = 60;
 
       var socket;
       var posUpdates = [];
@@ -323,21 +325,33 @@
         keyPresses.forEach(function(element, index, array) {
           var key = element;
           if (key == keyW) {
+            if (!inBoundingBox(thisMonster.x, thisMonster.y - monsterSpeed)){
+              return;
+            }
             thisMonster.y -= monsterSpeed;
             thisMonster.direction = "up";
             doMoveUpdate();
           }
           else if(key == keyS) {
+            if (!inBoundingBox(thisMonster.x, thisMonster.y + monsterSpeed)){
+              return;
+            }
             thisMonster.y += monsterSpeed;
             thisMonster.direction = "down";
             doMoveUpdate();
           }
           else if(key == keyA) {
+            if (!inBoundingBox(thisMonster.x - monsterSpeed, thisMonster.y)){
+              return;
+            }
             thisMonster.x -= monsterSpeed;
             thisMonster.direction = "left";
             doMoveUpdate();
           }
           else if(key == keyD) {
+            if (!inBoundingBox(thisMonster.x + monsterSpeed, thisMonster.y)){
+              return;
+            }
             thisMonster.x += monsterSpeed;
             thisMonster.direction = "right";
             doMoveUpdate();
@@ -369,6 +383,15 @@
         socket.emit('move', {id: thisMonster.id, x: thisMonster.x,
           y: thisMonster.y, direction: thisMonster.direction,
           xPercent: thisMonster.percentX, yPercent: thisMonster.percentY});
+      }
+
+      function inBoundingBox(x, y) {
+        if(x > wallWidth && x < map.width - wallWidth) {
+          if(y > wallHeight && y < map.height - wallHeight) {
+            return true;
+          }
+        }
+        return false;
       }
 
       Game.run = (function() {
