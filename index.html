@@ -256,7 +256,7 @@
         ctx.canvas.width = 800;
         ctx.canvas.height = 3 * (1024 / 4);
 
-        $('.container-game').height(ctx.canvas.height);
+        $('.container-game').height(ctx.canvas.height + 50);
 
         map = new Image();
         map.src = "/img/map/ld33-map.png";
@@ -358,9 +358,6 @@
         var centerY = (canvas.height / 2) - (animation.frameWidth / 2);
         var drawX = entity.id == thisMonster.id ? centerX : ((entity.x - animation.frameWidth) - (thisMonster.x - (canvas.width / 2))) + (animation.frameWidth / 2);
         var drawY = entity.id == thisMonster.id ? centerY : ((entity.y - animation.frameHeight) - (thisMonster.y - (canvas.height / 2))) + (animation.frameHeight / 2);
-
-        ctx.fillStyle = "red";
-        ctx.fillRect(400, 400, 20, 20);
 
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
