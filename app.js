@@ -134,10 +134,8 @@ io.on('connection', function (socket) {
   var id = uuid.v4();
   var monster = {
     id: id,
-    x: 550,
-    y: 450,
-    // x: getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100),
-    // y: getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100),
+    x: getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100),
+    y: getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100),
     type: monsterTypes[Math.floor(Math.random() * monsterTypes.length)],
     direction: 'up'
   }
