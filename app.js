@@ -43,9 +43,12 @@ var Human = function(type, x, y, direction, id, speed, target) {
   this.id = id;
   this.target = target;
   this.speed = speed;
+  this.steps = 0;
+  this.stepsUntilChange = -1;
+  this.stepDir = "";
 };
 var humans = {};
-var humanSpeed = 2;
+var humanSpeed = 9;
 var humanIntervals = {};
 var humanTypes = ['person_a', 'person_b', 'person_c'];
 
@@ -105,29 +108,87 @@ io.on('connection', function (socket) {
 
 function updatePerson(id) {
   var human = humans[id];
-  //TODO if we have time, make this smarter?
-  var newTargetX = getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100);
-  var newTargetY = getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100);
-  human.target = {x: newTargetX, y: newTargetY};
-  io.sockets.emit('human-target', human);
+  var targetX = human.target.x;
+  var targetY = human.target.y;
+  var goDir = human.stepDir;
+
+  var atX = targetX == human.x;
+  var atY = targetY == human.y;
+  if(human.steps >= human.stepsUntilChange || atX || atY) {
+    human.steps = 0;
+    human.stepsUntilChange = getRandomInt(50, 150);
+    if(atX && atY) {
+      buildHumanTarget(human);
+      goDir = Math.random() > 0.5 ? "vert" : "hor";
+    }
+    else if(atX) {
+      goDir = "vert";
+    }
+    else if(atY) {
+      goDir = "hor";
+    }
+    else {
+      goDir = Math.random() > 0.5 ? "vert" : "hor";
+    }
+    human.stepDir = goDir;
+  }
+  if(goDir == "vert") {
+    if(targetY - human.y < 0) {
+      human.direction = "up";
+      human.y = Math.round(human.y - humanSpeed);
+    }
+    else if(targetY - human.y > 0){
+      human.direction = "down";
+      human.y = Math.round(human.y + humanSpeed);
+    }
+  }
+  if(goDir == "hor") {
+    if(targetX - human.x < 0) {
+      human.direction = "left";
+      human.x = Math.round(human.x -humanSpeed);
+    }
+    else if(targetX - human.x > 0){
+      human.direction = "right";
+      human.x = Math.round(human.x + humanSpeed);
+    }
+  }
+
+  human.steps++;
+
+  io.sockets.emit('human-pos', human);
 }
 
-function buildHuman() {
+function buildHuman(type) {
   var id = uuid.v4();
   var x = getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100);
   var y = getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100);
-  var type = humanTypes[Math.floor(Math.random() * humanTypes.length)]
-  var newHuman = new Human(type, x, y, 'up', id, humanSpeed, {x: 0, y: 0});
+  var type = type != undefined ? type : humanTypes[Math.floor(Math.random() * humanTypes.length)]
+  var newHuman = new Human(type, x, y, 'up', id, humanSpeed, buildHumanTarget());
   humans[id] = newHuman;
   updatePerson(id);
-  var loopId = setInterval(function() {
+  var logicLoopId = setInterval(function() {
     updatePerson(id);
+  }, .10 * 1000);
+  humanIntervals[id] = id;
+  humanIntervals[id].logic = logicLoopId;
+  humanIntervals[id].reset = setInterval(function(){
+    newHuman.target = buildHumanTarget();
+    newHuman.steps = 0;
+    newHuman.stepsUntilChange = getRandomInt(50, 150);
   }, 3 * 1000);
-  humanIntervals[id] = loopId;
 }
 
-for(var i = 0; i < 3; i++){
-  buildHuman(3);
+function buildHumanTarget() {
+  var newTargetX = getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100);
+  var newTargetY = getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100);
+  return {x: newTargetX, y: newTargetY};
+}
+
+buildHuman('person_a');
+buildHuman('person_b');
+buildHuman('person_c');
+for(var i = 0; i < 2; i++){
+  buildHuman();
 }
 
 function getRandomInt(min, max) {

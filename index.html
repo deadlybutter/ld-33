@@ -224,9 +224,6 @@
         this.id = id;
         this.target = target;
 
-        this.steps = 0;
-        this.stepsUntilChange = -1;
-
         var moveImage = new Image();
         moveImage.src = "/img/people/" + this.type + "/move.png";
         this.animation = {
@@ -241,6 +238,7 @@
       };
       var humans = {};
       var humanSpeed = 1;
+      var humanPosUpdates = [];
 
       var map;
       var tile;
@@ -320,13 +318,13 @@
           }
         });
 
-        socket.on('human-target', function(data) {
+        socket.on('human-pos', function(data) {
           if(humans[data.id] == undefined) {
             humans[data.id] = new Human(data.type, data.x, data.y, data.direction, data.id, data.target);
             humanSpeed = data.speed;
           }
           else {
-            humans[data.id].target = data.target;
+            humanPosUpdates.push(data);
           }
         });
 
@@ -462,56 +460,19 @@
           theMonster.y = element.y;
           theMonster.animations.currentAnimation = 'move';
           theMonster.direction = element.direction;
-          theMonster.updatePercent(map);
         });
 
         posUpdates = [];
 
-        Object.keys(humans).forEach(function(key) {
-          var human = humans[key];
-          var targetX = human.target.x;
-          var targetY = human.target.y;
-
-          var atX = targetX == human.x;
-          var atY = targetY == human.y;
-          if(human.steps >= human.stepsUntilChange || atX || atY) {
-            human.steps = 0;
-            human.stepsUntilChange = getRandomInt(50, 150);
-            if(atX) {
-              goDir = "vert";
-            }
-            else if(atY) {
-              goDir = "hor";
-            }
-            else {
-              goDir = Math.random() > 0.5 ? "vert" : "hor";
-            }
-          }
-
-          if(goDir == "vert") {
-            if(targetY - human.y < 0) {
-              human.direction = "up";
-              human.y = Math.round(human.y - humanSpeed);
-            }
-            else if(targetY - human.y > 0){
-              human.direction = "down";
-              human.y = Math.round(human.y + humanSpeed);
-            }
-          }
-          if(goDir == "hor") {
-            if(targetX - human.x < 0) {
-              human.direction = "left";
-              human.x = Math.round(human.x -humanSpeed);
-            }
-            else if(targetX - human.x > 0){
-              human.direction = "right";
-              human.x = Math.round(human.x + humanSpeed);
-            }
-          }
-
-          human.steps++;
-
+        humanPosUpdates.forEach(function(element, index, array) {
+          var human = humans[element.id];
+          human.x = element.x;
+          human.y = element.y;
+          human.direction = element.direction;
         });
+
+        humanPosUpdates = [];
+
       };
 
       function doMoveUpdate() {
