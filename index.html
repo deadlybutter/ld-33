@@ -127,8 +127,51 @@
           totalAttackFrames: 8,
           ticksPerFrameMove: 10,
           ticksPerFrameAttack: 4
+        },
+        ghost: {
+          frameWidth: 52,
+          frameHeight: 60,
+          frameWidthAttack: 53,
+          totalMoveFrames: 4,
+          totalAttackFrames: 8,
+          ticksPerFrameMove: 16,
+          ticksPerFrameAttack: 7
+        },
+        gorilla: {
+          frameWidth: 58,
+          frameHeight: 52,
+          totalMoveFrames: 5,
+          totalAttackFrames: 8,
+          ticksPerFrameMove: 20,
+          ticksPerFrameAttack: 4
+        },
+        toad: {
+          frameWidth: 49,
+          frameHeight: 46,
+          totalMoveFrames: 5,
+          totalAttackFrames: 6,
+          ticksPerFrameMove: 10,
+          ticksPerFrameAttack: 8
+        },
+        person_a: {
+          frameWidth: 49,
+          frameHeight: 46,
+          totalMoveFrames: 5,
+          ticksPerFrameMove: 10
+        },
+        person_b: {
+          frameWidth: 49,
+          frameHeight: 46,
+          totalMoveFrames: 5,
+          ticksPerFrameMove: 10
+        },
+        person_c: {
+          frameWidth: 49,
+          frameHeight: 46,
+          totalMoveFrames: 5,
+          ticksPerFrameMove: 10
         }
-      }
+      };
       var monsterSpeed = 2;
       var Monster = function(x, y, type, id, direction) {
         this.x = x;
@@ -156,7 +199,7 @@
           },
           attack: {
             image: attackImage,
-            frameWidth: animationsGlobal[this.type].frameWidth,
+            frameWidth: animationsGlobal[this.type].frameWidthAttack === undefined ? animationsGlobal[this.type].frameWidth : animationsGlobal[this.type].frameWidthAttack,
             frameHeight: animationsGlobal[this.type].frameHeight,
             frameIndex: 0,
             totalFrames: animationsGlobal[this.type].totalAttackFrames,
@@ -173,6 +216,26 @@
       var thisMonster = new Monster(0, 0, 'gargant', 1);
       var allMonsters = {};
 
+      var Person = function(type, x, y, rotation) {
+        this.type = type;
+        this.x = x;
+        this.y = y;
+        this.rotation = rotation;
+
+        var moveImage = new Image();
+        moveImage.src = "/img/people/" + this.type + "/move.png";
+        this.animation = {
+          image: moveImage,
+          frameWidth: animationsGlobal[this.type].frameWidth,
+          frameHeight: animationsGlobal[this.type].frameHeight,
+          frameIndex: 0,
+          totalFrames: animationsGlobal[this.type].totalMoveFrames,
+          ticksPerFrame: animationsGlobal[this.type].ticksPerFrameMove,
+          ticks: 0
+        }
+      };
+      var thisPerson;
+
       var map;
       var tile;
       var tilePattern;
@@ -188,8 +251,12 @@
 
         canvas = document.getElementById("canvas");
         ctx = canvas.getContext('2d');
-        ctx.canvas.width = 1024;
-        ctx.canvas.height = 576;
+        // canvas.width = 1024;
+        // canvas.height = 576;
+        ctx.canvas.width = 800;
+        ctx.canvas.height = 3 * (1024 / 4);
+
+        $('.container-game').height(ctx.canvas.height);
 
         map = new Image();
         map.src = "/img/map/ld33-map.png";
@@ -201,6 +268,7 @@
         }
         map.onload = function() {
           ctx.drawImage(map, 0, 0, canvas.width, canvas.height);
+          thisPerson = new Person('person_a', 500, 400, "up");
           configureSockets();
         }
 
@@ -274,38 +342,46 @@
         ctx.drawImage(map, sourceX, sourceY, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
 
         // Monsters
-        drawMonster(thisMonster);
+        drawEntity(thisMonster);
         Object.keys(allMonsters).forEach(function(key) {
-          drawMonster(allMonsters[key]);
+          //console.log(allMonsters[key]);
+          drawEntity(allMonsters[key]);
         });
+
+        // Human
+        //drawEntity(thisPerson);
       };
 
-      function drawMonster(monster) {
-        var animation = monster.animations[monster.animations.currentAnimation];
+      function drawEntity(entity) {
+        var animation = entity.animation ? entity.animation : entity.animations[entity.animations.currentAnimation];
         var centerX = (canvas.width / 2) - (animation.frameWidth / 2);
         var centerY = (canvas.height / 2) - (animation.frameWidth / 2);
-        var drawX = monster.id == thisMonster.id ? centerX : monster.x - (thisMonster.x - (canvas.width / 2));
-        var drawY = monster.id == thisMonster.id ? centerY : monster.y - (thisMonster.y - (canvas.height / 2));
+        var drawX = entity.id == thisMonster.id ? centerX : ((entity.x - animation.frameWidth) - (thisMonster.x - (canvas.width / 2))) + (animation.frameWidth / 2);
+        var drawY = entity.id == thisMonster.id ? centerY : ((entity.y - animation.frameHeight) - (thisMonster.y - (canvas.height / 2))) + (animation.frameHeight / 2);
+
+        ctx.fillStyle = "red";
+        ctx.fillRect(400, 400, 20, 20);
 
         ctx.save();
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        monsterHalf = animation.frameWidth / 2;
-        ctx.translate(drawX + monsterHalf, drawY + monsterHalf);
+        entityHalfX = animation.frameWidth / 2;
+        entityHalfY = animation.frameHeight / 2;
+        ctx.translate(drawX + entityHalfX, drawY + entityHalfY);
         var rotation = 0;
-        if(monster.direction == "down") {
+        if(entity.direction == "down") {
           rotation = 180;
         }
-        else if(monster.direction == "left") {
+        else if(entity.direction == "left") {
           rotation = 270;
         }
-        else if(monster.direction == "right") {
+        else if(entity.direction == "right") {
           rotation = 90;
         }
         var angleInRadians = rotation * Math.PI / 180;
         ctx.rotate(angleInRadians);
 
         ctx.drawImage(animation.image, animation.frameIndex * animation.frameWidth,
-          0, animation.frameWidth, animation.frameHeight, -monsterHalf, -monsterHalf,
+          0, animation.frameWidth, animation.frameHeight, -entityHalfX, -entityHalfY,
           animation.frameWidth, animation.frameHeight);
 
         ctx.restore();

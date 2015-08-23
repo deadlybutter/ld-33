@@ -28,7 +28,7 @@ var io = require('socket.io')(server);
 
 var monsters = {};
 var monsterSpeed = 8;
-var monsterTypes = ['gargant', 'ogre', 'ogrillion'];
+var monsterTypes = ['toad', 'ghost'];
 
 var mapWidth = 3072;
 var mapHeight = 2048;
