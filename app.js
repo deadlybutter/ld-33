@@ -35,6 +35,20 @@ var mapHeight = 2048;
 var wallWidth = 96;
 var wallHeight = 60;
 
+var Human = function(type, x, y, direction, id, speed, target) {
+  this.type = type;
+  this.x = x;
+  this.y = y;
+  this.direction = direction;
+  this.id = id;
+  this.target = target;
+  this.speed = speed;
+};
+var humans = {};
+var humanSpeed = 2;
+var humanIntervals = {};
+var humanTypes = ['person_a', 'person_b', 'person_c'];
+
 // END GAME VARS
 
 app.get('/', function (req, res) {
@@ -45,13 +59,16 @@ io.on('connection', function (socket) {
   var id = uuid.v4();
   var monster = {
     id: id,
-    x: getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100),
-    y: getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100),
+    x: 550,
+    y: 450,
+    // x: getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100),
+    // y: getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100),
     type: monsterTypes[Math.floor(Math.random() * monsterTypes.length)],
     direction: 'up'
   }
   monsters[id] = monster;
   socket['monster_id'] = id;
+
   socket.emit('start', {monster: monster, info: {speed: monsterSpeed}});
   socket.broadcast.emit('player-connect', monster);
 
@@ -86,6 +103,33 @@ io.on('connection', function (socket) {
 
 });
 
+function updatePerson(id) {
+  var human = humans[id];
+  //TODO if we have time, make this smarter?
+  var newTargetX = getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100);
+  var newTargetY = getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100);
+  human.target = {x: newTargetX, y: newTargetY};
+  io.sockets.emit('human-target', human);
+}
+
+function buildHuman() {
+  var id = uuid.v4();
+  var x = getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100);
+  var y = getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100);
+  var type = humanTypes[Math.floor(Math.random() * humanTypes.length)]
+  var newHuman = new Human(type, x, y, 'up', id, humanSpeed, {x: 0, y: 0});
+  humans[id] = newHuman;
+  updatePerson(id);
+  var loopId = setInterval(function() {
+    updatePerson(id);
+  }, 3 * 1000);
+  humanIntervals[id] = loopId;
+}
+
+for(var i = 0; i < 3; i++){
+  buildHuman(3);
+}
+
 function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }

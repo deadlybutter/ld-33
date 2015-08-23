@@ -154,20 +154,20 @@
           ticksPerFrameAttack: 8
         },
         person_a: {
-          frameWidth: 49,
-          frameHeight: 46,
+          frameWidth: 25,
+          frameHeight: 18,
           totalMoveFrames: 5,
           ticksPerFrameMove: 10
         },
         person_b: {
-          frameWidth: 49,
-          frameHeight: 46,
+          frameWidth: 25,
+          frameHeight: 18,
           totalMoveFrames: 5,
           ticksPerFrameMove: 10
         },
         person_c: {
-          frameWidth: 49,
-          frameHeight: 46,
+          frameWidth: 25,
+          frameHeight: 18,
           totalMoveFrames: 5,
           ticksPerFrameMove: 10
         }
@@ -216,11 +216,16 @@
       var thisMonster = new Monster(0, 0, 'gargant', 1);
       var allMonsters = {};
 
-      var Person = function(type, x, y, rotation) {
+      var Human = function(type, x, y, direction, id, target) {
         this.type = type;
         this.x = x;
         this.y = y;
-        this.rotation = rotation;
+        this.direction = direction;
+        this.id = id;
+        this.target = target;
+
+        this.steps = 0;
+        this.stepsUntilChange = -1;
 
         var moveImage = new Image();
         moveImage.src = "/img/people/" + this.type + "/move.png";
@@ -234,7 +239,8 @@
           ticks: 0
         }
       };
-      var thisPerson;
+      var humans = {};
+      var humanSpeed = 1;
 
       var map;
       var tile;
@@ -268,7 +274,6 @@
         }
         map.onload = function() {
           ctx.drawImage(map, 0, 0, canvas.width, canvas.height);
-          thisPerson = new Person('person_a', 500, 400, "up");
           configureSockets();
         }
 
@@ -315,6 +320,16 @@
           }
         });
 
+        socket.on('human-target', function(data) {
+          if(humans[data.id] == undefined) {
+            humans[data.id] = new Human(data.type, data.x, data.y, data.direction, data.id, data.target);
+            humanSpeed = data.speed;
+          }
+          else {
+            humans[data.id].target = data.target;
+          }
+        });
+
         socket.on('player-connect', function(data) {
           allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
           allMonsters[data.id].updatePercent(map);
@@ -348,8 +363,11 @@
           drawEntity(allMonsters[key]);
         });
 
-        // Human
-        //drawEntity(thisPerson);
+        // Humans
+        Object.keys(humans).forEach(function(key) {
+          //console.log(allMonsters[key]);
+          drawEntity(humans[key]);
+        });
       };
 
       function drawEntity(entity) {
@@ -448,6 +466,52 @@
         });
 
         posUpdates = [];
+
+        Object.keys(humans).forEach(function(key) {
+          var human = humans[key];
+          var targetX = human.target.x;
+          var targetY = human.target.y;
+
+          var atX = targetX == human.x;
+          var atY = targetY == human.y;
+          if(human.steps >= human.stepsUntilChange || atX || atY) {
+            human.steps = 0;
+            human.stepsUntilChange = getRandomInt(50, 150);
+            if(atX) {
+              goDir = "vert";
+            }
+            else if(atY) {
+              goDir = "hor";
+            }
+            else {
+              goDir = Math.random() > 0.5 ? "vert" : "hor";
+            }
+          }
+
+          if(goDir == "vert") {
+            if(targetY - human.y < 0) {
+              human.direction = "up";
+              human.y = Math.round(human.y - humanSpeed);
+            }
+            else if(targetY - human.y > 0){
+              human.direction = "down";
+              human.y = Math.round(human.y + humanSpeed);
+            }
+          }
+          if(goDir == "hor") {
+            if(targetX - human.x < 0) {
+              human.direction = "left";
+              human.x = Math.round(human.x -humanSpeed);
+            }
+            else if(targetX - human.x > 0){
+              human.direction = "right";
+              human.x = Math.round(human.x + humanSpeed);
+            }
+          }
+
+          human.steps++;
+
+        });
       };
 
       function doMoveUpdate() {
@@ -506,6 +570,10 @@
 
           window.onEachFrame = onEachFrame;
         })();
+      }
+
+      function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
       }
 
     </script>
