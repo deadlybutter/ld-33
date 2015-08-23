@@ -14,6 +14,7 @@ app.use(sassMiddleware({
 app.use(express.static('public'));
 
 var uuid = require('uuid');
+var SAT = require('sat');
 
 var server = require('http').Server(app);
 server.listen(process.env.PORT || 3000, function () {
@@ -26,8 +27,79 @@ var io = require('socket.io')(server);
 
 // GAME VARS
 
+var animationsGlobal = {
+  gargant: {
+    frameWidth: 64,
+    frameHeight: 64,
+    totalMoveFrames: 8,
+    totalAttackFrames: 5,
+    ticksPerFrameMove: 10,
+    ticksPerFrameAttack: 10,
+  },
+  ogre: {
+    frameWidth: 64,
+    frameHeight: 64,
+    totalMoveFrames: 8,
+    totalAttackFrames: 8,
+    ticksPerFrameMove: 10,
+    ticksPerFrameAttack: 4
+  },
+  ogrillion: {
+    frameWidth: 64,
+    frameHeight: 64,
+    totalMoveFrames: 8,
+    totalAttackFrames: 8,
+    ticksPerFrameMove: 10,
+    ticksPerFrameAttack: 4
+  },
+  ghost: {
+    frameWidth: 52,
+    frameHeight: 60,
+    frameWidthAttack: 53,
+    totalMoveFrames: 4,
+    totalAttackFrames: 8,
+    ticksPerFrameMove: 16,
+    ticksPerFrameAttack: 7
+  },
+  gorilla: {
+    frameWidth: 58,
+    frameHeight: 52,
+    totalMoveFrames: 5,
+    totalAttackFrames: 8,
+    ticksPerFrameMove: 20,
+    ticksPerFrameAttack: 4
+  },
+  toad: {
+    frameWidth: 49,
+    frameHeight: 46,
+    totalMoveFrames: 5,
+    totalAttackFrames: 6,
+    ticksPerFrameMove: 10,
+    ticksPerFrameAttack: 8
+  },
+  person_a: {
+    frameWidth: 25,
+    frameHeight: 18,
+    totalMoveFrames: 5,
+    ticksPerFrameMove: 10
+  },
+  person_b: {
+    frameWidth: 25,
+    frameHeight: 18,
+    totalMoveFrames: 5,
+    ticksPerFrameMove: 10
+  },
+  person_c: {
+    frameWidth: 25,
+    frameHeight: 18,
+    totalMoveFrames: 5,
+    ticksPerFrameMove: 10
+  }
+};
+
 var monsters = {};
 var monsterSpeed = 8;
+//var monsterSpeed = 20;
 var monsterTypes = ['toad', 'ghost'];
 
 var mapWidth = 3072;
@@ -92,11 +164,23 @@ io.on('connection', function (socket) {
         }
       }
     }
+
   });
 
   socket.on('attack', function(data) {
-    //TODO check if we are hitting player
-    socket.broadcast.emit('attacking', monsters[data.id]);
+    socket.broadcast.emit('attacking', monsters[data]);
+    Object.keys(humans).forEach(function(key) {
+      var human = humans[key];
+      var monster = monsters[data.id];
+      var humanAnimation = animationsGlobal[human.type];
+      var monsterAnimation = animationsGlobal[monster.type];
+      var humanPolygon = new SAT.Box(new SAT.Vector(human.x, human.y), humanAnimation.frameWidth, humanAnimation.frameHeight).toPolygon();
+      var monsterPolygon = new SAT.Box(new SAT.Vector(monster.x, monster.y), monsterAnimation.frameWidth, monsterAnimation.frameHeight).toPolygon();
+      var collided = SAT.testPolygonPolygon(humanPolygon, monsterPolygon, new SAT.Response());
+      if(collided) {
+        handleHumanDeath(human.id);
+      }
+    });
   })
 
   socket.on('disconnect', function() {
@@ -176,12 +260,23 @@ function buildHuman(type) {
     newHuman.steps = 0;
     newHuman.stepsUntilChange = getRandomInt(50, 150);
   }, 3 * 1000);
+  return newHuman;
 }
 
 function buildHumanTarget() {
   var newTargetX = getRandomInt(wallWidth + 100, (mapWidth - wallWidth) - 100);
   var newTargetY = getRandomInt(wallHeight + 100, (mapHeight - wallHeight) - 100);
   return {x: newTargetX, y: newTargetY};
+}
+
+function handleHumanDeath(id) {
+  clearInterval(humanIntervals[id].logic);
+  clearInterval(humanIntervals[id].reset);
+  io.sockets.emit('human-death', id);
+  setTimeout(function() {
+    var h = buildHuman();
+    io.sockets.emit('human-spawn', h);
+  }, 5 * 1000);
 }
 
 buildHuman('person_a');
