@@ -489,6 +489,9 @@
 
         humanPosUpdates.forEach(function(element, index, array) {
           var human = humans[element.id];
+          if(human == undefined) {
+            return;
+          }
           human.x = element.x;
           human.y = element.y;
           human.direction = element.direction;
