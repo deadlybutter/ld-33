@@ -114,6 +114,9 @@
       var keySpace = 32;
       var keyPresses = [];
 
+      var killedAudio = new Audio('/audio/killed.mp3');
+      var spawnedAudio = new Audio('/audio/spawned.mp3');
+
       var animationsGlobal = {
         gargant: {
           frameWidth: 64,
@@ -344,6 +347,7 @@
           //TODO play sound
           humans[data.id] = new Human(data.type, data.x, data.y, data.direction, data.id, data.target);
           humanSpeed = data.speed;
+          spawnedAudio.play();
           setTimeout(function() {
             $('#info').hide();
           }, 3 * 1000);
@@ -355,6 +359,7 @@
           //TODO Play sound
           humans[data] = undefined;
           delete humans[data];
+          killedAudio.play();
           setTimeout(function() {
             $('#info').hide();
           }, 3 * 1000);
