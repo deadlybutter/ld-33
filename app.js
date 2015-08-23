@@ -171,6 +171,9 @@ io.on('connection', function (socket) {
     socket.broadcast.emit('attacking', monsters[data]);
     Object.keys(humans).forEach(function(key) {
       var human = humans[key];
+      if(human == undefined) {
+        return;
+      }
       var monster = monsters[data.id];
       var humanAnimation = animationsGlobal[human.type];
       var monsterAnimation = animationsGlobal[monster.type];
@@ -253,13 +256,15 @@ function buildHuman(type) {
   var logicLoopId = setInterval(function() {
     updatePerson(id);
   }, .10 * 1000);
-  humanIntervals[id] = id;
-  humanIntervals[id].logic = logicLoopId;
-  humanIntervals[id].reset = setInterval(function(){
+  var resetLoopId = setInterval(function(){
     newHuman.target = buildHumanTarget();
     newHuman.steps = 0;
     newHuman.stepsUntilChange = getRandomInt(50, 150);
   }, 3 * 1000);
+  humanIntervals[id] = {
+    logic: logicLoopId,
+    reset: resetLoopId
+  }
   return newHuman;
 }
 
@@ -270,6 +275,7 @@ function buildHumanTarget() {
 }
 
 function handleHumanDeath(id) {
+  humans[id] = undefined;
   clearInterval(humanIntervals[id].logic);
   clearInterval(humanIntervals[id].reset);
   io.sockets.emit('human-death', id);

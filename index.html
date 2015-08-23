@@ -242,6 +242,7 @@
       var humans = {};
       var humanSpeed = 1;
       var humanPosUpdates = [];
+      var blockedIds = [];
 
       var map;
       var tile;
@@ -330,12 +331,21 @@
           }
         });
 
-        //socket.on('human-spawn')
+        socket.on('human-spawn', function(data) {
+          //TODO play sound
+          humans[data.id] = new Human(data.type, data.x, data.y, data.direction, data.id, data.target);
+          humanSpeed = data.speed;
+          setTimeout(function() {
+            $('#info').hide();
+          }, 3 * 1000);
+          $('#info').text("A human has spawned!");
+          $('#info').show();
+        })
 
         socket.on('human-death', function(data) {
           //TODO Play sound
-          humans[data.id] = undefined;
-          delete humans[data.id];
+          humans[data] = undefined;
+          delete humans[data];
           setTimeout(function() {
             $('#info').hide();
           }, 3 * 1000);
@@ -372,13 +382,11 @@
         // Monsters
         drawEntity(thisMonster);
         Object.keys(allMonsters).forEach(function(key) {
-          //console.log(allMonsters[key]);
           drawEntity(allMonsters[key]);
         });
 
         // Humans
         Object.keys(humans).forEach(function(key) {
-          //console.log(allMonsters[key]);
           drawEntity(humans[key]);
         });
       };
