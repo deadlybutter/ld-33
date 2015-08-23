@@ -295,3 +295,7 @@ for(var i = 0; i < 2; i++){
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+
+setInterval(function() {
+  io.sockets.emit('heartbeat', "yo");
+}, 1000);

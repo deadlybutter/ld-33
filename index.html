@@ -252,6 +252,7 @@
 
       var socket;
       var posUpdates = [];
+      var heartbeatId;
 
       $(document).on('ready', function() {
         $('.full-height').height($(window).height());
@@ -361,6 +362,26 @@
         socket.on('player-disconnect', function(data) {
           delete allMonsters[data];
         });
+
+        socket.on('heartbeat', function(data) {
+          resetHeartBeat();
+        });
+
+      }
+
+      function resetHeartBeat() {
+        if (heartbeatId != undefined) {
+          clearTimeout(heartbeatId);
+        }
+        heartbeatId = setTimeout(heartbeatFail, 2 * 1000);
+      }
+      resetHeartBeat();
+
+      function heartbeatFail() {
+        r = window.confirm("Lost connection to server, click OK to reload");
+        if (r) {
+          location.reload();
+        }
       }
 
       var Game = {};
