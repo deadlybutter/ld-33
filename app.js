@@ -15,6 +15,7 @@ app.use(express.static('public'));
 
 var uuid = require('uuid');
 var SAT = require('sat');
+var stathat = require('stathat')
 
 var server = require('http').Server(app);
 server.listen(process.env.PORT || 3000, function () {
@@ -139,6 +140,9 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', function (socket) {
+  if(process.env.is_prod){
+    stathat.trackEZCount("thedeadlybutter@gmail.com", "LD33-Join", 1, function(status, json) {});
+  }
   var id = uuid.v4();
   var monster = {
     id: id,
@@ -187,6 +191,9 @@ io.on('connection', function (socket) {
       var monsterPolygon = new SAT.Box(new SAT.Vector(monster.x, monster.y), monsterAnimation.frameWidth, monsterAnimation.frameHeight).toPolygon();
       var collided = SAT.testPolygonPolygon(humanPolygon, monsterPolygon, new SAT.Response());
       if(collided) {
+        if(process.env.is_prod){
+          stathat.trackEZCount("thedeadlybutter@gmail.com", "ld33-kill", 1, function(status, json) {});
+        }
         handleHumanDeath(human.id);
       }
     });
