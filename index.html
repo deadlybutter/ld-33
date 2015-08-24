@@ -337,6 +337,9 @@
         });
 
         socket.on('attacking', function(data) {
+          if(data == null) {
+            return;
+          }
           if(allMonsters[data.id] == undefined) {
             allMonsters[data.id] = new Monster(data.x, data.y, data.type, data.id, data.direction);
             allMonsters[data.id].updatePercent(map);
@@ -526,6 +529,9 @@
 
         posUpdates.forEach(function(element, index, array) {
           var theMonster = allMonsters[element.id];
+          if(theMonster == undefined) {
+            return;
+          }
           theMonster.x = element.x;
           theMonster.y = element.y;
           theMonster.animations.currentAnimation = 'move';
