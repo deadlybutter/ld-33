@@ -77,6 +77,15 @@ var animationsGlobal = {
     ticksPerFrameMove: 10,
     ticksPerFrameAttack: 8
   },
+  ufo: {
+    frameWidth: 64,
+    frameHeight: 64,
+    frameWidthAttack: 65,
+    totalMoveFrames: 4,
+    totalAttackFrames: 7,
+    ticksPerFrameMove: 10,
+    ticksPerFrameAttack: 8,
+  },
   person_a: {
     frameWidth: 25,
     frameHeight: 18,
@@ -100,8 +109,8 @@ var animationsGlobal = {
 var monsters = {};
 var monsterSpeed = 8;
 //var monsterSpeed = 20;
-var monsterTypes = ['toad', 'ghost'];
-
+//var monsterTypes = ['toad', 'ghost', 'ufo'];
+var monsterTypes = ['ufo'];
 var mapWidth = 3072;
 var mapHeight = 2048;
 var wallWidth = 96;
